@@ -12,7 +12,8 @@ const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
 export async function sendPDFToUser(
   chatId: number,
   pdfBuffer: Buffer,
-  agentName: string
+  agentName: string,
+  clientInfo?: { name: string; role: string; budget: string; motivation: string }
 ): Promise<void> {
   const now = new Date();
   const dateStr = now.toLocaleDateString('ru-RU', {
@@ -22,10 +23,21 @@ export async function sendPDFToUser(
   });
   const fileName = `brief_${dateStr.replace(/\./g, '-')}_${now.getHours()}-${String(now.getMinutes()).padStart(2, '0')}.pdf`;
 
+  let caption = `📋 *Бриф клиента*\n\n🕐 ${dateStr}, ${now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}\n👤 Агент: ${agentName}\n`;
+  
+  if (clientInfo && (clientInfo.name !== 'Не указано' || clientInfo.role !== 'Не указано')) {
+    caption += `\n*О клиенте:*\n`;
+    caption += `👤 ${clientInfo.name} (${clientInfo.role})\n`;
+    if (clientInfo.budget !== 'Не указано') caption += `💰 Бюджет: ${clientInfo.budget}\n`;
+    if (clientInfo.motivation !== 'Не указано') caption += `🎯 Цель: ${clientInfo.motivation}\n`;
+  }
+  
+  caption += `\n_Сформировано с помощью Блокнот риелтора AI_`;
+
   const formData = new FormData();
   formData.append('chat_id', String(chatId));
   formData.append('document', new Blob([new Uint8Array(pdfBuffer)], { type: 'application/pdf' }), fileName);
-  formData.append('caption', `📋 *Бриф клиента*\n\n🕐 ${dateStr}, ${now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}\n👤 Агент: ${agentName}\n\n_Сформировано с помощью Блокнот риелтора AI_`);
+  formData.append('caption', caption);
   formData.append('parse_mode', 'Markdown');
 
   const response = await fetch(`${TELEGRAM_API}/sendDocument`, {

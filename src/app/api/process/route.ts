@@ -236,7 +236,12 @@ export async function POST(request: NextRequest) {
 
     // ===== Step 4: Send PDF via Telegram Bot =====
     console.log(`[Process] Sending PDF to user ${userId}...`);
-    await sendPDFToUser(Number(userId), pdfBuffer, userName || 'Агент');
+    await sendPDFToUser(Number(userId), pdfBuffer, userName || 'Агент', {
+      name: analysis.clientName,
+      role: analysis.clientRole,
+      budget: analysis.budget,
+      motivation: analysis.motivation,
+    });
 
     console.log(`[Process] Done!`);
 
