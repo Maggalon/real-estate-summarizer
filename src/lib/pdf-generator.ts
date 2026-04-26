@@ -160,8 +160,8 @@ export async function generateBriefPDF(
   y = PAGE_HEIGHT - 120;
 
   // ===== Section Drawer =====
-  const addSection = (marker: string, title: string, value: string) => {
-    const titleText = `${marker}  ${title}`;
+  const addSection = (title: string, value: string) => {
+    const titleText = `${title}`;
     const valueLines = wrapText(value, fontRegular, 10, CONTENT_WIDTH - 20);
     const sectionHeight = 30 + valueLines.length * 15;
 
@@ -217,13 +217,13 @@ export async function generateBriefPDF(
   };
 
   // ===== Brief Sections =====
-  addSection('\u25B6', 'БЮДЖЕТ', analysis.budget);
-  addSection('\u25B6', 'ЖЕЛАЕМЫЕ РАЙОНЫ', analysis.districts);
-  addSection('\u25B6', 'ТИП НЕДВИЖИМОСТИ', analysis.propertyType);
-  addSection('\u25B6', 'СОСТАВ СЕМЬИ', analysis.familyComposition);
-  addSection('\u25B6', 'СРОКИ СДЕЛКИ', analysis.dealTimeline);
-  addSection('\u25B6', 'ИСТОЧНИК ФИНАНСИРОВАНИЯ', analysis.financingSource);
-  addSection('\u25B6', 'СТРАХИ И ПОЖЕЛАНИЯ', analysis.fearsAndWishes);
+  addSection('БЮДЖЕТ', analysis.budget);
+  addSection('ЖЕЛАЕМЫЕ РАЙОНЫ', analysis.districts);
+  addSection('ТИП НЕДВИЖИМОСТИ', analysis.propertyType);
+  addSection('СОСТАВ СЕМЬИ', analysis.familyComposition);
+  addSection('СРОКИ СДЕЛКИ', analysis.dealTimeline);
+  addSection('ИСТОЧНИК ФИНАНСИРОВАНИЯ', analysis.financingSource);
+  addSection('СТРАХИ И ПОЖЕЛАНИЯ', analysis.fearsAndWishes);
 
   // ===== Divider =====
   ensureSpace(30);
@@ -244,7 +244,7 @@ export async function generateBriefPDF(
     height: 22,
     color: lightGray,
   });
-  page.drawText('\u25B6  ТРАНСКРИПЦИЯ РАЗГОВОРА', {
+  page.drawText('ТРАНСКРИПЦИЯ РАЗГОВОРА', {
     x: MARGIN + 10,
     y: y - 12,
     size: 11,
@@ -281,7 +281,7 @@ export async function generateBriefPDF(
   const pages = pdfDoc.getPages();
   pages.forEach((p, i) => {
     try {
-      p.drawText(`РиелторБриф AI  •  Стр. ${i + 1} из ${pages.length}`, {
+      p.drawText(`Блокнот риелтора AI  •  Стр. ${i + 1} из ${pages.length}`, {
         x: MARGIN,
         y: 25,
         size: 7,

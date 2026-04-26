@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
           await sendMessage(
             chatId,
             `👋 Привет, *${firstName}*!\n\n` +
-            `Я — *РиелторБриф*, ваш AI-помощник для анализа разговоров с клиентами.\n\n` +
+            `Я — *Блокнот риелтора*, ваш AI-помощник для анализа разговоров с клиентами.\n\n` +
             `🎙️ *Как это работает:*\n` +
             `1. Откройте приложение кнопкой ниже\n` +
             `2. Запишите разговор или загрузите аудио\n` +
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
           await sendMiniAppButton(
             chatId,
             '🚀 Откройте приложение для записи:',
-            '🎙️ Открыть РиелторБриф',
+            '🎙️ Открыть Блокнот риелтора',
             APP_URL
           );
           break;
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         case '/help': {
           await sendMessage(
             chatId,
-            `ℹ️ *Справка — РиелторБриф*\n\n` +
+            `ℹ️ *Справка — Блокнот риелтора*\n\n` +
             `*Доступные команды:*\n` +
             `/start — Начать работу\n` +
             `/brief — Открыть приложение\n` +
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
           await sendMiniAppButton(
             chatId,
             '🎙️ Нажмите кнопку, чтобы открыть приложение:',
-            '📋 Открыть РиелторБриф',
+            '📋 Открыть Блокнот риелтора',
             APP_URL
           );
           break;
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
             await sendMiniAppButton(
               chatId,
               `👋 Чтобы создать бриф, откройте приложение:`,
-              '🎙️ Открыть РиелторБриф',
+              '🎙️ Открыть Блокнот риелтора',
               APP_URL
             );
           }
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     status: 'ok',
-    bot: 'РиелторБриф',
+    bot: 'Блокнот риелтора',
     timestamp: new Date().toISOString(),
   });
 }

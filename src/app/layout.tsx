@@ -3,7 +3,7 @@ import "./globals.css";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "РиелторБриф — AI-анализ разговоров",
+  title: "Блокнот риелтора — AI-анализ разговоров",
   description: "Записывайте и анализируйте разговоры с клиентами. Получайте готовый PDF-бриф за минуту.",
 };
 

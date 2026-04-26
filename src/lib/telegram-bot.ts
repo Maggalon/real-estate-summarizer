@@ -25,7 +25,7 @@ export async function sendPDFToUser(
   const formData = new FormData();
   formData.append('chat_id', String(chatId));
   formData.append('document', new Blob([new Uint8Array(pdfBuffer)], { type: 'application/pdf' }), fileName);
-  formData.append('caption', `📋 *Бриф клиента*\n\n🕐 ${dateStr}, ${now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}\n👤 Агент: ${agentName}\n\n_Сформировано с помощью РиелторБриф AI_`);
+  formData.append('caption', `📋 *Бриф клиента*\n\n🕐 ${dateStr}, ${now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}\n👤 Агент: ${agentName}\n\n_Сформировано с помощью Блокнот риелтора AI_`);
   formData.append('parse_mode', 'Markdown');
 
   const response = await fetch(`${TELEGRAM_API}/sendDocument`, {

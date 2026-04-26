@@ -186,8 +186,10 @@ export default function Home() {
     <div className="app-shell">
       {/* ===== Header ===== */}
       <header className="app-header">
-        <div className="app-header__icon">🏠</div>
-        <h1 className="app-header__title">РиелторБриф</h1>
+        <div className="app-header__icon" style={{ padding: 0, overflow: 'hidden' }}>
+          <img src="/logo.jpeg" alt="Логотип" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+        <h1 className="app-header__title">Блокнот риелтора</h1>
         <p className="app-header__subtitle">
           AI-анализ разговоров с клиентами за минуту
         </p>
