@@ -5,9 +5,9 @@
  * with embedded Roboto font from Google Fonts.
  */
 
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 interface AnalysisResult {
@@ -21,37 +21,25 @@ interface AnalysisResult {
   rawTranscription: string;
 }
 
-// Cache the font to avoid re-downloading
-const FONT_CACHE_DIR = join(process.cwd(), '.font-cache');
-const FONT_REGULAR_PATH = join(FONT_CACHE_DIR, 'Roboto-Regular.ttf');
-const FONT_BOLD_PATH = join(FONT_CACHE_DIR, 'Roboto-Bold.ttf');
+/**
+ * Load the bundled Roboto font that supports Cyrillic characters.
+ * The font file lives in public/fonts/ and is a full static TTF.
+ */
+async function loadFonts(): Promise<{ regular: Uint8Array; bold: Uint8Array }> {
+  const fontPath = join(process.cwd(), 'public', 'fonts', 'Roboto-Variable.ttf');
 
-async function downloadFont(url: string, path: string): Promise<void> {
-  if (existsSync(path)) return;
-
-  if (!existsSync(FONT_CACHE_DIR)) {
-    mkdirSync(FONT_CACHE_DIR, { recursive: true });
+  if (!existsSync(fontPath)) {
+    throw new Error(
+      `Roboto font not found at ${fontPath}. ` +
+      `Ensure public/fonts/Roboto-Variable.ttf exists.`
+    );
   }
 
-  const response = await fetch(url);
-  const buffer = Buffer.from(await response.arrayBuffer());
-  writeFileSync(path, buffer);
-}
-
-async function loadFonts(): Promise<{ regular: Uint8Array; bold: Uint8Array }> {
-  // Download Roboto fonts from GitHub (Google Fonts mirror)
-  await downloadFont(
-    'https://github.com/google/fonts/raw/main/ofl/roboto/Roboto%5Bwdth%2Cwght%5D.ttf',
-    FONT_REGULAR_PATH
-  );
-
-  // For bold, we'll use the same variable font
-  // If variable font fails, we use same file for both
-  const regularBytes = readFileSync(FONT_REGULAR_PATH);
+  const fontBytes = new Uint8Array(readFileSync(fontPath));
 
   return {
-    regular: new Uint8Array(regularBytes),
-    bold: new Uint8Array(regularBytes),
+    regular: fontBytes,
+    bold: fontBytes, // Variable font — same file handles all weights
   };
 }
 
@@ -70,12 +58,13 @@ export async function generateBriefPDF(
 
   try {
     const fonts = await loadFonts();
-    fontRegular = await pdfDoc.embedFont(fonts.regular);
-    fontBold = await pdfDoc.embedFont(fonts.bold);
+    fontRegular = await pdfDoc.embedFont(fonts.regular, { subset: false });
+    fontBold = await pdfDoc.embedFont(fonts.bold, { subset: false });
   } catch (e) {
-    console.warn('[PDF] Failed to load Roboto font, falling back to Helvetica:', e);
-    fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    console.error('[PDF] Failed to load Roboto font:', e);
+    // Do NOT fall back to Helvetica — it uses WinAnsi encoding and cannot render Cyrillic.
+    // Re-throw so the error is visible instead of producing a broken PDF.
+    throw new Error(`Cannot generate PDF: failed to load Cyrillic-capable font. ${e}`);
   }
 
   const PAGE_WIDTH = 595.28; // A4
@@ -171,8 +160,8 @@ export async function generateBriefPDF(
   y = PAGE_HEIGHT - 120;
 
   // ===== Section Drawer =====
-  const addSection = (icon: string, title: string, value: string) => {
-    const titleText = `${icon}  ${title}`;
+  const addSection = (marker: string, title: string, value: string) => {
+    const titleText = `${marker}  ${title}`;
     const valueLines = wrapText(value, fontRegular, 10, CONTENT_WIDTH - 20);
     const sectionHeight = 30 + valueLines.length * 15;
 
@@ -228,13 +217,13 @@ export async function generateBriefPDF(
   };
 
   // ===== Brief Sections =====
-  addSection('💰', 'БЮДЖЕТ', analysis.budget);
-  addSection('📍', 'ЖЕЛАЕМЫЕ РАЙОНЫ', analysis.districts);
-  addSection('🏢', 'ТИП НЕДВИЖИМОСТИ', analysis.propertyType);
-  addSection('👨‍👩‍👧‍👦', 'СОСТАВ СЕМЬИ', analysis.familyComposition);
-  addSection('📅', 'СРОКИ СДЕЛКИ', analysis.dealTimeline);
-  addSection('🏦', 'ИСТОЧНИК ФИНАНСИРОВАНИЯ', analysis.financingSource);
-  addSection('💭', 'СТРАХИ И ПОЖЕЛАНИЯ', analysis.fearsAndWishes);
+  addSection('\u25B6', 'БЮДЖЕТ', analysis.budget);
+  addSection('\u25B6', 'ЖЕЛАЕМЫЕ РАЙОНЫ', analysis.districts);
+  addSection('\u25B6', 'ТИП НЕДВИЖИМОСТИ', analysis.propertyType);
+  addSection('\u25B6', 'СОСТАВ СЕМЬИ', analysis.familyComposition);
+  addSection('\u25B6', 'СРОКИ СДЕЛКИ', analysis.dealTimeline);
+  addSection('\u25B6', 'ИСТОЧНИК ФИНАНСИРОВАНИЯ', analysis.financingSource);
+  addSection('\u25B6', 'СТРАХИ И ПОЖЕЛАНИЯ', analysis.fearsAndWishes);
 
   // ===== Divider =====
   ensureSpace(30);
@@ -255,7 +244,7 @@ export async function generateBriefPDF(
     height: 22,
     color: lightGray,
   });
-  page.drawText('📝  ТРАНСКРИПЦИЯ РАЗГОВОРА', {
+  page.drawText('\u25B6  ТРАНСКРИПЦИЯ РАЗГОВОРА', {
     x: MARGIN + 10,
     y: y - 12,
     size: 11,
