@@ -10,14 +10,29 @@ import fontkit from '@pdf-lib/fontkit';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
-interface AnalysisResult {
+export interface AnalysisResult {
+  contactDateTime: string;
+  interactionType: string;
+  clientName: string;
+  clientRole: string;
+  motivation: string;
   budget: string;
-  districts: string;
-  propertyType: string;
-  familyComposition: string;
-  dealTimeline: string;
-  financingSource: string;
-  fearsAndWishes: string;
+  paymentMethod: string;
+  timeline: string;
+  decisionMakers: string;
+  priorExperience: string;
+  propertyAddress: string;
+  legalStatus: string;
+  feedback: string;
+  providedInfo: string;
+  priceJustification: string;
+  clientProgress: string;
+  objections: string;
+  trueReason: string;
+  objectionHandling: string;
+  agreements: string;
+  agentTasks: string;
+  nextContact: string;
   rawTranscription: string;
 }
 
@@ -160,14 +175,8 @@ export async function generateBriefPDF(
   y = PAGE_HEIGHT - 120;
 
   // ===== Section Drawer =====
-  const addSection = (title: string, value: string) => {
-    const titleText = `${title}`;
-    const valueLines = wrapText(value, fontRegular, 10, CONTENT_WIDTH - 20);
-    const sectionHeight = 30 + valueLines.length * 15;
-
-    ensureSpace(sectionHeight);
-
-    // Section header background
+  const addBlockHeader = (title: string) => {
+    ensureSpace(40);
     page.drawRectangle({
       x: MARGIN,
       y: y - 18,
@@ -177,53 +186,132 @@ export async function generateBriefPDF(
       borderColor: rgb(0.88, 0.9, 0.93),
       borderWidth: 0.5,
     });
-
-    // Section title
-    page.drawText(titleText, {
+    page.drawText(title, {
       x: MARGIN + 10,
       y: y - 12,
       size: 11,
       font: fontBold,
       color: blue,
     });
+    y -= 30;
+  };
 
-    y -= 28;
-
-    // Section value
-    for (const line of valueLines) {
-      ensureSpace(16);
+  const addField = (label: string, value: string) => {
+    if (!value) return;
+    const labelText = `${label}: `;
+    const labelWidth = fontBold.widthOfTextAtSize(labelText, 10);
+    
+    const firstLineMaxWidth = CONTENT_WIDTH - 20 - labelWidth;
+    const words = value.split(/\s+/);
+    
+    let firstLine = '';
+    let i = 0;
+    while (i < words.length) {
+      const testLine = firstLine ? `${firstLine} ${words[i]}` : words[i];
       try {
-        page.drawText(line, {
-          x: MARGIN + 10,
-          y: y,
-          size: 10,
-          font: fontRegular,
-          color: darkText,
-        });
+        const w = fontRegular.widthOfTextAtSize(testLine, 10);
+        if (w > firstLineMaxWidth && firstLine) {
+          break;
+        }
+        firstLine = testLine;
+        i++;
       } catch {
-        // fallback for unsupported chars
-        page.drawText(line.replace(/[^\x00-\x7F]/g, '?'), {
-          x: MARGIN + 10,
-          y: y,
-          size: 10,
-          font: fontRegular,
-          color: darkText,
-        });
+        firstLine = testLine;
+        i++;
       }
-      y -= 15;
     }
-
-    y -= 8;
+    
+    ensureSpace(20);
+    try {
+      page.drawText(labelText, {
+        x: MARGIN + 10,
+        y: y,
+        size: 10,
+        font: fontBold,
+        color: darkText,
+      });
+      page.drawText(firstLine, {
+        x: MARGIN + 10 + labelWidth,
+        y: y,
+        size: 10,
+        font: fontRegular,
+        color: darkText,
+      });
+    } catch {
+      page.drawText(labelText + firstLine, {
+        x: MARGIN + 10,
+        y: y,
+        size: 10,
+        font: fontRegular,
+        color: darkText,
+      });
+    }
+    
+    y -= 15;
+    
+    if (i < words.length) {
+       const remainingText = words.slice(i).join(' ');
+       const valueLines = wrapText(remainingText, fontRegular, 10, CONTENT_WIDTH - 20);
+       
+       for (const line of valueLines) {
+         ensureSpace(16);
+         try {
+           page.drawText(line, {
+             x: MARGIN + 10,
+             y: y,
+             size: 10,
+             font: fontRegular,
+             color: darkText,
+           });
+         } catch {
+           page.drawText(line.replace(/[^\x00-\x7F]/g, '?'), {
+             x: MARGIN + 10,
+             y: y,
+             size: 10,
+             font: fontRegular,
+             color: darkText,
+           });
+         }
+         y -= 15;
+       }
+    }
+    y -= 5;
   };
 
   // ===== Brief Sections =====
-  addSection('БЮДЖЕТ', analysis.budget);
-  addSection('ЖЕЛАЕМЫЕ РАЙОНЫ', analysis.districts);
-  addSection('ТИП НЕДВИЖИМОСТИ', analysis.propertyType);
-  addSection('СОСТАВ СЕМЬИ', analysis.familyComposition);
-  addSection('СРОКИ СДЕЛКИ', analysis.dealTimeline);
-  addSection('ИСТОЧНИК ФИНАНСИРОВАНИЯ', analysis.financingSource);
-  addSection('СТРАХИ И ПОЖЕЛАНИЯ', analysis.fearsAndWishes);
+  addBlockHeader('1. ПАСПОРТ КОНТАКТА');
+  addField('Дата и время', analysis.contactDateTime);
+  addField('Тип взаимодействия', analysis.interactionType);
+  addField('ФИО клиента', analysis.clientName);
+  addField('Роль клиента', analysis.clientRole);
+
+  addBlockHeader('2. КВАЛИФИКАЦИЯ И ПРОФИЛЬ КЛИЕНТА');
+  addField('Мотивация', analysis.motivation);
+  addField('Бюджет', analysis.budget);
+  addField('Форма расчетов', analysis.paymentMethod);
+  addField('Сроки', analysis.timeline);
+  addField('ЛПР', analysis.decisionMakers);
+  addField('Опыт работы', analysis.priorExperience);
+
+  addBlockHeader('3. ДЕТАЛИ ПО ОБЪЕКТУ НЕДВИЖИМОСТИ');
+  addField('Адрес и параметры', analysis.propertyAddress);
+  addField('Юридический статус', analysis.legalStatus);
+  addField('Обратная связь', analysis.feedback);
+
+  addBlockHeader('4. ХОД ПЕРЕГОВОРОВ');
+  addField('Предоставлено', analysis.providedInfo);
+  addField('Обоснование', analysis.priceJustification);
+  addField('Прогресс', analysis.clientProgress);
+
+  addBlockHeader('5. ВОЗРАЖЕНИЯ И "КРАСНЫЕ ФЛАГИ"');
+  addField('Возражения', analysis.objections);
+  addField('Истинная причина', analysis.trueReason);
+  addField('Отработка', analysis.objectionHandling);
+
+  addBlockHeader('6. ACTION PLAN');
+  addField('Договоренности', analysis.agreements);
+  addField('Задачи для риелтора', analysis.agentTasks);
+  addField('Следующий контакт', analysis.nextContact);
 
   // ===== Divider =====
   ensureSpace(30);

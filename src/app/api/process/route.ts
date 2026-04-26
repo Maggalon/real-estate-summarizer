@@ -5,14 +5,36 @@ import { sendPDFToUser } from '@/lib/telegram-bot';
 
 export const maxDuration = 60; // Allow up to 60s for processing
 
-interface AnalysisResult {
+export interface AnalysisResult {
+  // 1. Паспорт контакта
+  contactDateTime: string;
+  interactionType: string;
+  clientName: string;
+  clientRole: string;
+  // 2. Квалификация и профиль клиента
+  motivation: string;
   budget: string;
-  districts: string;
-  propertyType: string;
-  familyComposition: string;
-  dealTimeline: string;
-  financingSource: string;
-  fearsAndWishes: string;
+  paymentMethod: string;
+  timeline: string;
+  decisionMakers: string;
+  priorExperience: string;
+  // 3. Детали по объекту недвижимости
+  propertyAddress: string;
+  legalStatus: string;
+  feedback: string;
+  // 4. Ход переговоров
+  providedInfo: string;
+  priceJustification: string;
+  clientProgress: string;
+  // 5. Возражения и "красные флаги"
+  objections: string;
+  trueReason: string;
+  objectionHandling: string;
+  // 6. Action Plan
+  agreements: string;
+  agentTasks: string;
+  nextContact: string;
+  // Транскрипция
   rawTranscription: string;
 }
 
@@ -22,20 +44,47 @@ const ANALYSIS_PROMPT = `Ты — профессиональный AI-помощ
 
 1. ТРАНСКРИПЦИЯ: Создай полную текстовую транскрипцию разговора на русском языке.
 
-2. АНАЛИЗ: Извлеки из разговора следующую структурированную информацию:
-   - budget: Бюджет клиента на покупку/аренду недвижимости. Если диапазон — укажи от и до.
-   - districts: Желаемые районы/локации. Перечисли все упоминаемые районы, улицы, ориентиры.
-   - propertyType: Тип недвижимости: квартира/дом/таунхаус и т.д. Количество комнат, желаемая площадь, этаж, другие характеристики.
-   - familyComposition: Состав семьи: количество людей, наличие детей (возраст), домашних животных.
-   - dealTimeline: Желаемые сроки сделки, когда хотят заехать/купить.
-   - financingSource: Источник финансирования: ипотека, наличные, материнский капитал, военная ипотека, рассрочка и т.д.
-   - fearsAndWishes: Главные страхи, опасения, ключевые пожелания и приоритеты клиента. Запиши подробно все нюансы.
+2. АНАЛИЗ: Извлеки из разговора структурированную информацию по 6 блокам:
+
+БЛОК 1: Паспорт контакта (Метаданные)
+- contactDateTime: Дата и время контакта (из разговора, иначе "Не указано").
+- interactionType: Тип взаимодействия (Входящий звонок / Исходящий звонок / Личная встреча / Показ объекта / Переговоры по сделке).
+- clientName: ФИО клиента.
+- clientRole: Роль клиента (Покупатель / Продавец / Встречная покупка).
+
+БЛОК 2: Квалификация и профиль клиента (Что мы узнали)
+- motivation: Потребность / Мотивация (истинная причина продажи/покупки, зачем продают, для кого покупают).
+- budget: Бюджет / Ожидания по цене (сумма покупки или "дно" для продавца).
+- paymentMethod: Форма расчетов (наличные, ипотека, маткапитал, субсидии).
+- timeline: Сроки (как быстро нужно переехать или выйти на сделку).
+- decisionMakers: ЛПР - Лица, принимающие решение (кто еще участвует в сделке).
+- priorExperience: Опыт работы (был ли негативный/позитивный опыт с другими агентствами).
+
+БЛОК 3: Детали по объекту недвижимости
+- propertyAddress: Адрес и базовые параметры.
+- legalStatus: Юридический статус (обременения, собственники, маткапитал, готовность документов).
+- feedback: Обратная связь после показа (что понравилось, что категорически нет).
+
+БЛОК 4: Ход переговоров (Что транслировал риелтор)
+- providedInfo: Предоставленная информация (маркетинговый план, аналитика, эксклюзив и т.д.).
+- priceJustification: Обоснование комиссии/цены (аргументы про безопасность, экономию времени).
+- clientProgress: Прогресс по клиенту (например: "Контакт установлен", "Согласие получено").
+
+БЛОК 5: Возражения и "красные флаги"
+- objections: Озвученные возражения ("Дорого", "Я подумаю", "Сам продам").
+- trueReason: Истинная причина / Диагностика ИИ (скрытый страх клиента: боится обмана, сравнивает цены).
+- objectionHandling: Отработка (как риелтор закрыл возражение).
+
+БЛОК 6: Action Plan (Резолюция и следующие шаги)
+- agreements: Договоренности (встреча на объекте и т.д.).
+- agentTasks: Задачи для риелтора (что конкретно сделать).
+- nextContact: Следующий контакт (дата и время).
 
 Правила:
-- Если информация не была упомянута в разговоре, напиши "Не указан" / "Не указаны" / "Не упоминается"
-- Используй конкретные цифры и факты из разговора
-- Будь максимально точным
-- Транскрипция должна быть полной и дословной`;
+- Если информация не была упомянута, напиши "Не указано".
+- Используй конкретные цифры и факты из разговора.
+- Анализ должен быть точным и лаконичным, без "воды".
+- Транскрипция должна быть полной и дословной.`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -98,48 +147,37 @@ export async function POST(request: NextRequest) {
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            transcription: {
-              type: Type.STRING,
-              description: 'Полная текстовая транскрипция разговора на русском языке.',
-            },
-            budget: {
-              type: Type.STRING,
-              description: 'Бюджет клиента.',
-            },
-            districts: {
-              type: Type.STRING,
-              description: 'Желаемые районы и локации.',
-            },
-            propertyType: {
-              type: Type.STRING,
-              description: 'Тип недвижимости, комнатность, площадь.',
-            },
-            familyComposition: {
-              type: Type.STRING,
-              description: 'Состав семьи: дети, животные.',
-            },
-            dealTimeline: {
-              type: Type.STRING,
-              description: 'Желаемые сроки сделки.',
-            },
-            financingSource: {
-              type: Type.STRING,
-              description: 'Источник финансирования.',
-            },
-            fearsAndWishes: {
-              type: Type.STRING,
-              description: 'Главные страхи и пожелания клиента.',
-            },
+            transcription: { type: Type.STRING, description: 'Транскрипция' },
+            contactDateTime: { type: Type.STRING },
+            interactionType: { type: Type.STRING },
+            clientName: { type: Type.STRING },
+            clientRole: { type: Type.STRING },
+            motivation: { type: Type.STRING },
+            budget: { type: Type.STRING },
+            paymentMethod: { type: Type.STRING },
+            timeline: { type: Type.STRING },
+            decisionMakers: { type: Type.STRING },
+            priorExperience: { type: Type.STRING },
+            propertyAddress: { type: Type.STRING },
+            legalStatus: { type: Type.STRING },
+            feedback: { type: Type.STRING },
+            providedInfo: { type: Type.STRING },
+            priceJustification: { type: Type.STRING },
+            clientProgress: { type: Type.STRING },
+            objections: { type: Type.STRING },
+            trueReason: { type: Type.STRING },
+            objectionHandling: { type: Type.STRING },
+            agreements: { type: Type.STRING },
+            agentTasks: { type: Type.STRING },
+            nextContact: { type: Type.STRING },
           },
           required: [
-            'transcription',
-            'budget',
-            'districts',
-            'propertyType',
-            'familyComposition',
-            'dealTimeline',
-            'financingSource',
-            'fearsAndWishes',
+            'transcription', 'contactDateTime', 'interactionType', 'clientName', 'clientRole',
+            'motivation', 'budget', 'paymentMethod', 'timeline', 'decisionMakers', 'priorExperience',
+            'propertyAddress', 'legalStatus', 'feedback',
+            'providedInfo', 'priceJustification', 'clientProgress',
+            'objections', 'trueReason', 'objectionHandling',
+            'agreements', 'agentTasks', 'nextContact'
           ],
         },
       },
@@ -165,13 +203,28 @@ export async function POST(request: NextRequest) {
     }
 
     const analysis: AnalysisResult = {
-      budget: parsed.budget || 'Не указан',
-      districts: parsed.districts || 'Не указаны',
-      propertyType: parsed.propertyType || 'Не указан',
-      familyComposition: parsed.familyComposition || 'Не указан',
-      dealTimeline: parsed.dealTimeline || 'Не указаны',
-      financingSource: parsed.financingSource || 'Не указан',
-      fearsAndWishes: parsed.fearsAndWishes || 'Не указаны',
+      contactDateTime: parsed.contactDateTime || 'Не указано',
+      interactionType: parsed.interactionType || 'Не указано',
+      clientName: parsed.clientName || 'Не указано',
+      clientRole: parsed.clientRole || 'Не указано',
+      motivation: parsed.motivation || 'Не указано',
+      budget: parsed.budget || 'Не указано',
+      paymentMethod: parsed.paymentMethod || 'Не указано',
+      timeline: parsed.timeline || 'Не указано',
+      decisionMakers: parsed.decisionMakers || 'Не указано',
+      priorExperience: parsed.priorExperience || 'Не указано',
+      propertyAddress: parsed.propertyAddress || 'Не указано',
+      legalStatus: parsed.legalStatus || 'Не указано',
+      feedback: parsed.feedback || 'Не указано',
+      providedInfo: parsed.providedInfo || 'Не указано',
+      priceJustification: parsed.priceJustification || 'Не указано',
+      clientProgress: parsed.clientProgress || 'Не указано',
+      objections: parsed.objections || 'Не указано',
+      trueReason: parsed.trueReason || 'Не указано',
+      objectionHandling: parsed.objectionHandling || 'Не указано',
+      agreements: parsed.agreements || 'Не указано',
+      agentTasks: parsed.agentTasks || 'Не указано',
+      nextContact: parsed.nextContact || 'Не указано',
       rawTranscription: parsed.transcription || 'Транскрипция недоступна',
     };
 

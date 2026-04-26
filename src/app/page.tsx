@@ -6,13 +6,28 @@ import { useAudioRecorder } from '@/hooks/useAudioRecorder';
 
 // ===== Types =====
 interface AnalysisResult {
+  contactDateTime: string;
+  interactionType: string;
+  clientName: string;
+  clientRole: string;
+  motivation: string;
   budget: string;
-  districts: string;
-  propertyType: string;
-  familyComposition: string;
-  dealTimeline: string;
-  financingSource: string;
-  fearsAndWishes: string;
+  paymentMethod: string;
+  timeline: string;
+  decisionMakers: string;
+  priorExperience: string;
+  propertyAddress: string;
+  legalStatus: string;
+  feedback: string;
+  providedInfo: string;
+  priceJustification: string;
+  clientProgress: string;
+  objections: string;
+  trueReason: string;
+  objectionHandling: string;
+  agreements: string;
+  agentTasks: string;
+  nextContact: string;
   rawTranscription: string;
 }
 
@@ -370,38 +385,38 @@ export default function Home() {
               </div>
 
               <div className="result-item">
-                <div className="result-item__label">💰 Бюджет</div>
-                <div className="result-item__value">{analysisResult.budget}</div>
+                <div className="result-item__label">👤 Клиент</div>
+                <div className="result-item__value">{analysisResult.clientName} ({analysisResult.clientRole})</div>
               </div>
 
               <div className="result-item">
-                <div className="result-item__label">📍 Желаемые районы</div>
-                <div className="result-item__value">{analysisResult.districts}</div>
+                <div className="result-item__label">💰 Бюджет и расчет</div>
+                <div className="result-item__value">{analysisResult.budget} — {analysisResult.paymentMethod}</div>
               </div>
 
               <div className="result-item">
-                <div className="result-item__label">🏢 Тип недвижимости</div>
-                <div className="result-item__value">{analysisResult.propertyType}</div>
+                <div className="result-item__label">🎯 Мотивация и сроки</div>
+                <div className="result-item__value">{analysisResult.motivation}. Сроки: {analysisResult.timeline}</div>
               </div>
 
               <div className="result-item">
-                <div className="result-item__label">👨‍👩‍👧‍👦 Состав семьи</div>
-                <div className="result-item__value">{analysisResult.familyComposition}</div>
+                <div className="result-item__label">📍 Объект</div>
+                <div className="result-item__value">{analysisResult.propertyAddress}</div>
               </div>
 
               <div className="result-item">
-                <div className="result-item__label">📅 Сроки сделки</div>
-                <div className="result-item__value">{analysisResult.dealTimeline}</div>
+                <div className="result-item__label">⚠️ Возражения</div>
+                <div className="result-item__value">{analysisResult.objections}</div>
               </div>
 
               <div className="result-item">
-                <div className="result-item__label">🏦 Источник финансирования</div>
-                <div className="result-item__value">{analysisResult.financingSource}</div>
+                <div className="result-item__label">✅ Задачи</div>
+                <div className="result-item__value">{analysisResult.agentTasks}</div>
               </div>
 
               <div className="result-item">
-                <div className="result-item__label">💭 Страхи и пожелания</div>
-                <div className="result-item__value">{analysisResult.fearsAndWishes}</div>
+                <div className="result-item__label">📅 Следующий контакт</div>
+                <div className="result-item__value">{analysisResult.nextContact}</div>
               </div>
             </div>
 
