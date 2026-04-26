@@ -210,24 +210,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* ===== Debug Logs ===== */}
-        <div style={{
-          background: 'rgba(0,0,0,0.8)',
-          color: '#0f0',
-          padding: '10px',
-          borderRadius: '8px',
-          margin: '0 0 16px 0',
-          fontFamily: 'monospace',
-          fontSize: '12px',
-          maxHeight: '150px',
-          overflowY: 'auto',
-          whiteSpace: 'pre-wrap',
-          textAlign: 'left'
-        }}>
-          <b>Логи (Debug):</b>
-          {logs.length === 0 ? <div style={{opacity:0.5}}>Пока пусто...</div> : null}
-          {logs.map((log, i) => <div key={i}>{log}</div>)}
-        </div>
+
 
         {/* ===== Home Screen ===== */}
         {screen === 'home' && (
